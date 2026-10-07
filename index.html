@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>팀 근태 트래커</title>
+<style>
+:root {
+  --apple: #e74c3c;
+  --orange: #f39c12;
+  --lemon: #f1c40f;
+  --bg: #f8f9fa;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --accent: #3b82f6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+}
+header h1 { font-size: 20px; font-weight: 600; }
+nav {
+  display: flex;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  gap: 4px;
+}
+nav button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+}
+nav button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+main { padding: 24px; max-width: 900px; margin: 0 auto; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+button.primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}
+button.danger {
+  background: white;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+button.secondary {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+}
+input, select {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+}
+.fruit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.fruit-btn:hover { border-color: #cbd5e1; }
+.fruit-btn.given {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+.fruit-emoji { font-size: 20px; line-height: 1; }
+.timeblock-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.timeblock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.timeblock-name { font-weight: 600; font-size: 15px; }
+.timeblock-time { color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+.member-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.day-checks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.day-checks label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+.bar-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.bar-label { width: 120px; font-size: 14px; flex-shrink: 0; }
+.bar-track {
+  flex: 1;
+  background: #f3f4f6;
+  height: 24px;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  min-width: 60px;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  transition: width 0.3s;
+  white-space: nowrap;
+}
+.bar-fill:empty { padding: 0; }
+.bar-fill.apple { background: var(--apple); }
+.bar-fill.orange { background: var(--orange); }
+.bar-fill.lemon { background: var(--lemon); color: #1f2937; }
+.bar-fill.rate { background: var(--accent); }
+.bar-value { min-width: 70px; font-size: 13px; color: var(--text-muted); text-align: right; }
+.empty {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+}
+.period-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.period-tabs button {
+  background: white;
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+}
+.period-tabs button.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.add-form {
+  background: #f9fafb;
+  padding: 14px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  display: none;
+  border: 1px solid var(--border);
+}
+.add-form.open { display: block; }
+.form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.form-row:last-child { margin-bottom: 0; }
+label.form-label { font-size: 13px; min-width: 60px; color: var(--text-muted); }
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.note {
+  background: #fffbeb;
+  border-color: #fde68a !important;
+}
+.note .head { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+.note .body { font-size: 13px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>팀 근태 트래커</h1>
+</header>
+<nav>
+  <button data-tab="today" class="active">오늘</button>
+  <button data-tab="settings">설정</button>
+  <button data-tab="stats">통계</button>
+</nav>
+<main id="view"></main>
+<script>
+// ============ Constants ============
+const STORAGE_KEY = 'team-attendance-v1';
+const FRUITS = {
+  apple:  { emoji: '🍎', name: '사과' },
+  orange: { emoji: '🍊', name: '오렌지' },
+  lemon:  { emoji: '🍋', name: '레몬' },
+};
+const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
+
+// ============ Data Layer ============
+function defaultData() {
+  return {
+    members: [
+      { id: 'm1', name: '팀원 1', fruit: 'apple' },
+      { id: 'm2', name: '팀원 2', fruit: 'orange' },
+      { id: 'm3', name: '팀원 3', fruit: 'lemon' },
+    ],
+    timeblocks: [],
+    records: [],
+  };
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    return { ...defaultData(), ...JSON.parse(raw) };
+  } catch {
+    return defaultData();
+  }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = load();
+let activeTab = 'today';
+let statsPeriod = 'week';
+
+function update(mutator) {
+  mutator(state);
+  save();
+  render();
+}
+
+// ============ Helpers ============
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function dateToStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function todayStr() { return dateToStr(new Date()); }
+function todayDow() { return new Date().getDay(); }
+
+function periodRange(period) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let start;
+  if (period === 'week') {
+    const dow = today.getDay();
+    const monOffset = dow === 0 ? -6 : 1 - dow;
+    start = new Date(today);
+    start.setDate(today.getDate() + monOffset);
+  } else {
+    start = new Date(today.getFullYear(), today.getMonth(), 1);
+  }
+  return { start, end: today };
+}
+
+function hasSticker(date, timeblockId, memberId) {
+  return state.records.some(r =>
+    r.date === date && r.timeblockId === timeblockId && r.memberId === memberId
+  );
+}
+
+function toggleSticker(date, timeblockId, memberId) {
+  update(s => {
+    const idx = s.records.findIndex(r =>
+      r.date === date && r.timeblockId === timeblockId && r.memberId === memberId
+    );
+    if (idx >= 0) s.records.splice(idx, 1);
+    else s.records.push({ date, timeblockId, memberId, onTime: true });
+  });
+}
+
+function countSlotDays(block, start, end) {
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    if (block.days.includes(cur.getDay())) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
+// ============ DOM Helper ============
+function el(tag, attrs = {}, children = []) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'value') e.value = v;
+    else if (k === 'checked') e.checked = true;
+    else if (k === 'selected') e.selected = true;
+    else e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null || c === false) continue;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return e;
+}
+
+// ============ Render ============
+const view = document.getElementById('view');
+
+function render() {
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === activeTab);
+  });
+  view.innerHTML = '';
+  if (activeTab === 'today') view.appendChild(renderToday());
+  else if (activeTab === 'settings') view.appendChild(renderSettings());
+  else if (activeTab === 'stats') view.appendChild(renderStats());
+}
+
+// --- Today tab ---
+function renderToday() {
+  const wrap = el('div');
+  const dow = todayDow();
+  const date = todayStr();
+  const today = new Date();
+  const dateLabel = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 (${DAY_NAMES[dow]}요일)`;
+
+  wrap.appendChild(el('div', { class: 'card' }, [
+    el('h2', {}, [dateLabel]),
+  ]));
+
+  const blocksToday = state.timeblocks.filter(b => b.days.includes(dow));
+
+  if (blocksToday.length === 0) {
+    wrap.appendChild(el('div', { class: 'card' }, [
+      el('div', { class: 'empty' }, [
+        '오늘 활성 타임블록이 없어요. 설정에서 추가해주세요.',
+      ]),
+    ]));
+    return wrap;
+  }
+
+  for (const block of blocksToday) {
+    wrap.appendChild(el('div', { class: 'card' }, [
+      el('div', { class: 'timeblock-header' }, [
+        el('div', {}, [
+          el('div', { class: 'timeblock-name' }, [block.name]),
+          el('div', { class: 'timeblock-time' }, [`${block.start} – ${block.end}`]),
+        ]),
+      ]),
+      el('div', { class: 'member-row' },
+        state.members.map(m => {
+          const given = hasSticker(date, block.id, m.id);
+          return el('button', {
+            class: 'fruit-btn' + (given ? ' given' : ''),
+            onClick: () => toggleSticker(date, block.id, m.id),
+          }, [
+            el('span', { class: 'fruit-emoji' }, [FRUITS[m.fruit].emoji]),
+            el('span', {}, [m.name]),
+            given ? el('span', { style: 'color:#22c55e;font-weight:600' }, ['✓']) : null,
+          ]);
+        })
+      ),
+    ]));
+  }
+  return wrap;
+}
+
+// --- Settings tab ---
+function renderSettings() {
+  const wrap = el('div');
+
+  // Members card
+  const membersCard = el('div', { class: 'card' }, [
+    el('h2', {}, ['팀원']),
+    ...state.members.map((m, i) => el('div', { class: 'row' }, [
+      el('input', {
+        type: 'text',
+        value: m.name,
+        onChange: (e) => update(s => { s.members[i].name = e.target.value; }),
+        style: 'flex:1;max-width:240px',
+      }),
+      el('select', {
+        onChange: (e) => update(s => { s.members[i].fruit = e.target.value; }),
+      }, Object.entries(FRUITS).map(([k, v]) => el('option', {
+        value: k,
+        selected: m.fruit === k,
+      }, [`${v.emoji} ${v.name}`]))),
+    ])),
+  ]);
+  wrap.appendChild(membersCard);
+
+  // Timeblocks card
+  const tbCard = el('div', { class: 'card' }, [
+    el('div', { class: 'section-head' }, [
+      el('h2', { style: 'margin:0' }, ['타임블록']),
+      el('button', {
+        class: 'primary',
+        onClick: () => {
+          const f = document.getElementById('add-block-form');
+          f.classList.toggle('open');
+        },
+      }, ['+ 추가']),
+    ]),
+    renderBlockForm(null),
+    ...renderBlockList(),
+  ]);
+  wrap.appendChild(tbCard);
+
+  // Future-import note
+  wrap.appendChild(el('div', { class: 'card note' }, [
+    el('div', { class: 'head' }, ['외부 캘린더 연동 (예정)']),
+    el('div', { class: 'body' }, [
+      '향후 .ics 파일 업로드나 캘린더 동기화로 타임블록을 가져올 수 있어요. 지금은 수동으로 추가해주세요.',
+    ]),
+  ]));
+
+  return wrap;
+}
+
+function renderBlockForm(editing) {
+  const f = el('div', {
+    id: 'add-block-form',
+    class: 'add-form' + (editing ? ' open' : ''),
+  });
+
+  const nameInput = el('input', {
+    type: 'text',
+    placeholder: '예: 오전 스탠드업',
+    value: editing?.name || '',
+    style: 'flex:1;min-width:160px',
+  });
+  const startInput = el('input', { type: 'time', value: editing?.start || '09:00' });
+  const endInput = el('input', { type: 'time', value: editing?.end || '10:00' });
+  const dayChecks = DAY_NAMES.map((d, i) => {
+    const checked = editing ? editing.days.includes(i) : (i >= 1 && i <= 5);
+    return el('label', {}, [
+      el('input', {
+        type: 'checkbox',
+        'data-day': String(i),
+        checked,
+      }),
+      d,
+    ]);
+  });
+
+  f.appendChild(el('div', { class: 'form-row' }, [
+    el('label', { class: 'form-label' }, ['이름']),
+    nameInput,
+  ]));
+  f.appendChild(el('div', { class: 'form-row' }, [
+    el('label', { class: 'form-label' }, ['시간']),
+    startInput,
+    el('span', {}, ['–']),
+    endInput,
+  ]));
+  f.appendChild(el('div', { class: 'form-row' }, [
+    el('label', { class: 'form-label' }, ['반복']),
+    el('div', { class: 'day-checks' }, dayChecks),
+  ]));
+  f.appendChild(el('div', { class: 'form-row' }, [
+    el('button', {
+      class: 'primary',
+      onClick: () => {
+        const name = nameInput.value.trim();
+        if (!name) { alert('이름을 입력해주세요.'); return; }
+        const days = Array.from(f.querySelectorAll('input[data-day]:checked'))
+          .map(c => parseInt(c.dataset.day, 10));
+        if (days.length === 0) { alert('반복 요일을 1개 이상 선택해주세요.'); return; }
+        if (startInput.value >= endInput.value) {
+          alert('시작 시각이 종료 시각보다 빨라야 해요.'); return;
+        }
+        update(s => {
+          if (editing) {
+            const i = s.timeblocks.findIndex(b => b.id === editing.id);
+            s.timeblocks[i] = {
+              ...editing,
+              name,
+              start: startInput.value,
+              end: endInput.value,
+              days,
+            };
+          } else {
+            s.timeblocks.push({
+              id: uid(),
+              name,
+              start: startInput.value,
+              end: endInput.value,
+              days,
+              source: 'manual',
+              externalId: null,
+            });
+          }
+        });
+      },
+    }, [editing ? '저장' : '추가']),
+    el('button', {
+      class: 'secondary',
+      onClick: () => {
+        if (editing) render();
+        else f.classList.remove('open');
+      },
+    }, ['취소']),
+  ]));
+  return f;
+}
+
+function renderBlockList() {
+  if (state.timeblocks.length === 0) {
+    return [el('div', { class: 'empty' }, ['아직 타임블록이 없어요.'])];
+  }
+  return state.timeblocks.map(b => el('div', { class: 'timeblock-card' }, [
+    el('div', { class: 'timeblock-header' }, [
+      el('div', {}, [
+        el('div', { class: 'timeblock-name' }, [b.name]),
+        el('div', { class: 'timeblock-time' }, [
+          `${b.start} – ${b.end} · ${b.days.map(i => DAY_NAMES[i]).join(', ')}`,
+        ]),
+      ]),
+      el('div', { style: 'display:flex;gap:6px' }, [
+        el('button', {
+          class: 'secondary',
+          style: 'padding:6px 10px;font-size:12px',
+          onClick: () => {
+            const f = renderBlockForm(b);
+            document.getElementById('add-block-form').replaceWith(f);
+          },
+        }, ['수정']),
+        el('button', {
+          class: 'danger',
+          onClick: () => {
+            if (!confirm(`"${b.name}" 타임블록을 삭제할까요? 관련 기록도 함께 삭제돼요.`)) return;
+            update(s => {
+              s.timeblocks = s.timeblocks.filter(t => t.id !== b.id);
+              s.records = s.records.filter(r => r.timeblockId !== b.id);
+            });
+          },
+        }, ['삭제']),
+      ]),
+    ]),
+  ]));
+}
+
+// --- Stats tab ---
+function renderStats() {
+  const wrap = el('div');
+  const { start, end } = periodRange(statsPeriod);
+
+  wrap.appendChild(el('div', { class: 'period-tabs' }, [
+    el('button', {
+      class: statsPeriod === 'week' ? 'active' : '',
+      onClick: () => { statsPeriod = 'week'; render(); },
+    }, ['이번 주']),
+    el('button', {
+      class: statsPeriod === 'month' ? 'active' : '',
+      onClick: () => { statsPeriod = 'month'; render(); },
+    }, ['이번 달']),
+  ]));
+
+  const startStr = dateToStr(start);
+  const endStr = dateToStr(end);
+  const recordsInPeriod = state.records.filter(r =>
+    r.date >= startStr && r.date <= endStr
+  );
+
+  // (A) Member totals
+  const memberCard = el('div', { class: 'card' }, [
+    el('h2', {}, [`팀원별 스티커 합계 (${startStr} ~ ${endStr})`]),
+  ]);
+  const memberCounts = state.members.map(m => ({
+    m,
+    count: recordsInPeriod.filter(r => r.memberId === m.id).length,
+  }));
+  const maxCount = Math.max(1, ...memberCounts.map(x => x.count));
+  for (const { m, count } of memberCounts) {
+    const pct = (count / maxCount) * 100;
+    memberCard.appendChild(el('div', { class: 'bar-chart-row' }, [
+      el('div', { class: 'bar-label' }, [`${FRUITS[m.fruit].emoji} ${m.name}`]),
+      el('div', { class: 'bar-track' }, [
+        el('div', {
+          class: `bar-fill ${m.fruit}`,
+          style: `width:${pct}%`,
+        }, [count > 0 ? String(count) : '']),
+      ]),
+      el('div', { class: 'bar-value' }, [`${count}개`]),
+    ]));
+  }
+  wrap.appendChild(memberCard);
+
+  // (B) On-time rate per timeblock
+  const rateCard = el('div', { class: 'card' }, [
+    el('h2', {}, ['타임블록별 정시율']),
+  ]);
+  if (state.timeblocks.length === 0) {
+    rateCard.appendChild(el('div', { class: 'empty' }, ['타임블록이 없어요.']));
+  } else {
+    for (const b of state.timeblocks) {
+      const slotDays = countSlotDays(b, start, end);
+      const slots = slotDays * state.members.length;
+      const stickers = recordsInPeriod.filter(r => r.timeblockId === b.id).length;
+      const rate = slots === 0 ? 0 : Math.round((stickers / slots) * 100);
+      rateCard.appendChild(el('div', { class: 'bar-chart-row' }, [
+        el('div', { class: 'bar-label' }, [b.name]),
+        el('div', { class: 'bar-track' }, [
+          el('div', {
+            class: 'bar-fill rate',
+            style: `width:${rate}%`,
+          }, [rate > 0 ? `${rate}%` : '']),
+        ]),
+        el('div', { class: 'bar-value' }, [`${stickers}/${slots}`]),
+      ]));
+    }
+  }
+  wrap.appendChild(rateCard);
+
+  return wrap;
+}
+
+// ============ Init ============
+document.querySelectorAll('nav button').forEach(b => {
+  b.addEventListener('click', () => {
+    activeTab = b.dataset.tab;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
